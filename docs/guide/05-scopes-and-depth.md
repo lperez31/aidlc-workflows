@@ -1,15 +1,36 @@
 # Scopes, Depth, and Test Strategy
 
-A **workflow** is the path one piece of work takes through AI-DLC, from what you
-ask for to what gets built. This chapter explains how a workflow runs, which
-settings shape it, and how to tailor it. To choose a workflow for a kind of work,
-see [Workflow Profiles](workflow-profiles.md).
+Every piece of work you give AI-DLC runs as a **workflow**: a series of stages,
+each producing a document or code that you approve before the next one starts.
+Three settings shape that workflow.
+
+- **Scope** decides **which stages run**. AI-DLC has 33 stages across five
+  phases, from capturing the intent to deploying and monitoring. A scope is a
+  ready-made selection of them for one kind of work: `bugfix` runs 6 stages
+  (understand the code, requirements, code, tests, and the deployment path),
+  while `feature` runs all 30 stages after setup.
+- **Depth** decides **how much detail each stage writes**. At `minimal`, the
+  requirements are a page of key decisions; at `comprehensive`, they include
+  compliance matrices and detailed non-functional requirements.
+- **Test strategy** decides **how many tests are written** in Construction. At
+  `minimal`, one test per requirement; at `comprehensive`, 10-15 tests per
+  component, including end-to-end tests.
+
+Each scope comes with a default depth and test strategy, and you can change
+either for one piece of work. For example, `/aidlc bugfix --test-strategy comprehensive Fix the login timeout`
+runs the short bugfix path but writes a thorough test suite.
+
+[Workflow Profiles](workflow-profiles.md) describes each scope and when to
+choose it. The scope explorer shows the stages each scope runs and builds the
+command for the stages you pick.
 
 <a class="md-button md-button--primary" href="https://awslabs.github.io/aidlc-workflows/guide/assets/scope-explorer.html">Open the scope explorer</a>
 
 ---
 
-## How a workflow runs
+## Scopes
+
+### How a workflow runs
 
 ```mermaid
 flowchart LR
@@ -21,57 +42,24 @@ flowchart LR
     D -->|"approve<br/>the last stage"| E["Done"]
 ```
 
-1. **You describe the work**, in your own words or by naming a workflow
+1. **You describe the work**, in your own words or by naming a scope
    (`/aidlc bugfix Fix the login timeout`).
-2. **The agent proposes a plan**: which stages will run, how many, and how many
-   approval questions you will get. Nothing starts until you answer.
+2. **The agent proposes a plan**: the scope, how many stages will run, and how
+   many approval questions you will get. Nothing starts until you answer.
 3. **Each stage produces something**: a document such as the requirements or a
    design, or code and tests. The agents doing the work ask you only what they
    cannot decide themselves.
 4. **You approve each stage** before the next one starts, or ask for changes and
    the stage is redone. What you approve is what the next stage builds on.
 5. **You stay in control of the route.** You can go back to an earlier stage,
-   skip or add a stage, or switch to another workflow while the work is running.
+   skip or add a stage, or switch to another scope while the work is running.
 
 Some stages adapt on their own. A stage marked *conditional* skips itself when it
 does not apply, for example Reverse Engineering on a new project with no code to
 read. In Construction, design stages and Code Generation repeat for each Unit of
 Work when the plan splits the work into Units.
 
----
-
-## What shapes a workflow
-
-Three settings decide what a workflow does. Each has a default from the
-workflow you picked, and you can change it for one piece of work.
-
-| Setting | What it decides | Values | Change it with |
-|---------|-----------------|--------|----------------|
-| **Scope** | Which stages run | 11 shipped scopes, plus any your team adds | `/aidlc <scope>` or `/aidlc --scope <scope>` |
-| **Depth** | How much detail each document has | `minimal`, `standard`, `comprehensive` | `/aidlc --depth <level>` |
-| **Test strategy** | How many tests are written | `minimal`, `standard`, `comprehensive` | `/aidlc --test-strategy <level>` |
-
-*Scope* is the engine's word for what [Workflow Profiles](workflow-profiles.md)
-calls a profile. A scope also brings defaults for the stops inside each stage
-(the [ceremony switches](13-customization.md#ceremony-switches): sensors,
-learnings, summary confirmation, plan approval, collaborators), a review level,
-and a default Guard Policy value (strict on `enterprise`; off on the rest; see [Guard Policy](13-customization.md#guard-policy) for what the value does and how to set it).
-Changing one of these settings adjusts your workflow; it never turns one scope
-into another.
-
-Plugin installs can add more scopes, and an install can narrow which plugin
-scopes are visible with `aidlc engine plugin select <names>`.
-
-**Counting stages.** AI-DLC has 33 stages. The first three, Initialization, set
-up the workspace and run in every scope without a question, so the plan offer and
-`/aidlc --help` count the stages after them: `feature` runs 30 stages with 30
-approval questions, `poc` runs 5. On a new project the offer also leaves out
-Reverse Engineering, so for a scope that runs it the offer says one fewer. The
-[routing table](#scope-routing-table) at the end of this chapter counts all 33.
-
----
-
-## The Agent Proposes the Plan
+### The Agent Proposes the Plan
 
 You don't have to name a scope. Describe what you want:
 
@@ -107,9 +95,7 @@ work it starts. With no plan named or proposed, the default is `classic`; a
 project can change it with `AWS_AIDLC_DEFAULT_SCOPE` (see
 [Per-Project Default Scope](13-customization.md#per-project-default-scope)).
 
----
-
-## Choosing the Right Scope
+### Choosing the Right Scope
 
 | Situation | Recommended Scope |
 |-----------|------------------|
@@ -133,11 +119,9 @@ well-understood change, start with `express` (or `bugfix` for a known bug) and
 add the one stage you want, rather than starting with `feature`, which runs
 every stage.
 
----
+### Tailoring a plan
 
-## Tailoring a plan
-
-### Skip or add stages
+#### Skip or add stages
 
 Name the stages to drop or add when you start the work. They change this piece
 of work only; the scope stays as it is:
@@ -158,7 +142,7 @@ research?"). The reply says what changed and how to undo it. See `--skip` /
 [scope explorer](https://awslabs.github.io/aidlc-workflows/guide/assets/scope-explorer.html)
 builds the command for you from the stages you tick.
 
-### The Adaptive Composer
+#### The Adaptive Composer
 
 When your request does not fit a ready-made plan, or you ask for one, the
 composer agent designs a plan for this piece of work:
@@ -209,7 +193,7 @@ Settings mid-workflow: ask in plain words ("turn sensors off", "give this full r
 
 </details>
 
-### Saving a plan as a scope
+#### Saving a plan as a scope
 
 A tailored plan you want to reuse can become a scope of its own. Pick
 **Approve and save as scope** at the composer's question, or later say "save this
@@ -219,6 +203,24 @@ Guard Policy, and names the command that reuses it
 survives an engine reinstall, and travels to the other harnesses with your
 `aidlc/` folder. Where it is stored and how to edit it is in
 [Where a saved scope is stored](../harness-engineering/04-scopes.md#where-a-saved-scope-is-stored).
+
+### What else a scope sets
+
+*Scope* is the engine's word for what [Workflow Profiles](workflow-profiles.md)
+calls a profile. Besides its stages, a scope brings defaults for the stops inside
+each stage (the [ceremony switches](13-customization.md#ceremony-switches):
+sensors, learnings, summary confirmation, plan approval, collaborators), a review
+level, and a default Guard Policy value (strict on `enterprise`; off on the rest; see [Guard Policy](13-customization.md#guard-policy) for what the value does and how to set it).
+Changing one of these settings adjusts your workflow; it never turns one scope
+into another. Plugin installs can add more scopes, and an install can narrow
+which plugin scopes are visible with `aidlc engine plugin select <names>`.
+
+**Counting stages.** The first three of the 33 stages, Initialization, set up the
+workspace and run in every scope without a question, so the plan offer and
+`/aidlc --help` count the stages after them: `feature` runs 30 stages with 30
+approval questions, `poc` runs 5. On a new project the offer also leaves out
+Reverse Engineering, so for a scope that runs it the offer says one fewer. The
+[routing table](#scope-routing-table) at the end of this chapter counts all 33.
 
 ---
 
