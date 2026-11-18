@@ -4,7 +4,7 @@ A scope is the dial that decides *which* of the framework's 33 stages run for a 
 
 For a harness engineer, a scope is pure data, authored the same way every other primitive is — as a file. It is two halves: one `core/scopes/aidlc-<name>.md` file (its identity, routing metadata, and workflow defaults) plus a per-stage membership tag (each stage's frontmatter `scopes:` list naming the scopes it runs under). Adding or tuning a scope requires no TypeScript. This chapter walks the workflow: what a scope is made of, how to add a team scope, how to tune an existing one, and what the tooling checks for you versus what it leaves to you.
 
-For the full eleven-scope catalog with use cases and the routing table users read, see [Scopes, Depth, and Test Strategy](../guide/05-scopes-and-depth.md) in the User Guide. This chapter is the authoring side of that same data.
+For how a workflow runs, how to tailor its stages, and the routing table users read, see [Scopes, Depth, and Test Strategy](../guide/05-scopes-and-depth.md) in the User Guide; each scope's use case is in [Workflow Profiles](../guide/workflow-profiles.md). This chapter is the authoring side of that same data.
 
 ---
 
@@ -158,7 +158,7 @@ scopes:
 
 A stage that names a scope is `EXECUTE` under it; absence is `SKIP`. Packaging *transposes* every stage's `scopes:` list into the compiled EXECUTE/SKIP grid at `<harness-dir>/tools/data/scope-grid.json`. The grid is an ignored generated projection that the runtime reads; you never hand-edit or commit it. The 3 initialization stages name every scope (they always run).
 
-That transpose is the mechanism for *authored* scopes, which is what this chapter is about. A scope saved at runtime from a composed plan (`scope save`) has no stage declaring it, so it cannot be transposed: its durable definition lives in the user's own tree at `aidlc/scopes/<name>.md` and compile projects it into the harness grid. You do not author those, and they are not part of this workflow; see [Where a saved scope is stored](../guide/05-scopes-and-depth.md#where-a-saved-scope-is-stored). A composed plan the person does not save writes no scope at all: it runs on a stock scope with its own stage changes recorded in that piece of work's state.
+That transpose is the mechanism for *authored* scopes, which is what this chapter is about. A scope saved at runtime from a composed plan (`scope save`) has no stage declaring it, so it cannot be transposed: its durable definition lives in the user's own tree at `aidlc/scopes/<name>.md` and compile projects it into the harness grid. You do not author those, and they are not part of this workflow; see [Where a saved scope is stored](#where-a-saved-scope-is-stored) below. A composed plan the person does not save writes no scope at all: it runs on a stock scope with its own stage changes recorded in that piece of work's state.
 
 The one judgment call worth understanding is the relationship between `depth` and `testStrategy`. Depth controls how much detail each stage's artifacts carry; test strategy controls how many tests get generated. They're independent on purpose. Most shipped scopes leave `testStrategy` off so it inherits from `depth` — `classic` is Standard/Standard and `express` is Minimal/Minimal. `workshop` demonstrates the explicit split with Standard depth and Minimal testing. If your scope wants a split, declare both. For what each level means, see [The 3 Depth Levels](../guide/05-scopes-and-depth.md#the-3-depth-levels) and [The 3 Test Strategy Levels](../guide/05-scopes-and-depth.md#the-3-test-strategy-levels) in the User Guide.
 
@@ -228,6 +228,58 @@ Tuning is a smaller edit, but it lands on the stage, not the scope. Two changes 
 Either way, the regenerate-and-doctor pair from step 3 above applies. The edit is small; the verification is the same.
 
 A note on layering: tuning the shipped scopes edits framework-shipped files directly — a stage's `scopes:` tag or a shipped `core/scopes/aidlc-*.md`. That's legitimate for a fork that wants different defaults, but be aware you're changing files that carry the `aidlc-` lineage and a framework upgrade may want to reconcile them. Adding a net-new scope file alongside the shipped eleven is the cleaner path when you want a team-specific behavior without touching the defaults everyone else relies on.
+
+---
+
+## Where a saved scope is stored
+
+A person can keep a composed plan as a scope: **Approve and save as scope** at the composer's gate, or "save this plan as quick-fix" later, which runs `aidlc engine scope save --name quick-fix` (see [Saving a plan as a scope](../guide/05-scopes-and-depth.md#saving-a-plan-as-a-scope)). Such a scope is not authored the way this chapter describes. A stock scope belongs to the engine: it is regenerated into the harness tree on every build. A saved scope belongs to the person: nothing in the engine produces it, so it is stored with the rest of their work:
+
+| | Path | Role |
+|---|---|---|
+| **Record** | `aidlc/scopes/<name>.md` | The durable source. The scope file, plus a generated grid region holding the EXECUTE/SKIP plan, in one file. Commit it with the rest of your `aidlc/` tree |
+| **Projection** | `<harness>/scopes/aidlc-<name>.md` + a `scope-grid.json` column | What the runtime reads. Regenerated from the record by `aidlc engine graph compile` |
+
+Two things follow:
+
+- **An engine reinstall cannot lose the scope.** Replacing the harness tree discards the projection; the next `graph compile` rebuilds it from the record. This matters for the copy channel in particular, where `scope-grid.json` is a generated file that any copy-over replaces.
+- **A saved scope travels between harnesses.** The record lives in the shared, tool-neutral `aidlc/` tree, so a collaborator working in `.kiro/` or `.codex/` resolves a scope you saved in `.claude/` after one `graph compile`.
+
+If you have a composed scope from an earlier release it lives only in the harness tree; the first `graph compile` after upgrading writes its record for you, once. From then on the record is the source.
+
+### The record's shape
+
+Everything above the sentinel comment is yours to edit — frontmatter and prose alike, including your own Markdown headings and fenced code. Everything between the sentinels is generated. Treat the region as the **end** of the file: write your prose above it, because that is the part `graph compile` projects into the harness tree. Anything you append *below* the END sentinel stays in the record — nothing rewrites a record that already exists — but it is not carried into the harness scope file:
+
+````markdown
+---
+name: my-lean-feature
+depth: Standard
+keywords: []
+---
+
+# my-lean-feature
+
+Whatever you want to write, including a "## Stage Grid" heading of your own.
+
+<!-- BEGIN aidlc composed-scope-grid: generated by `aidlc engine graph compile` — reshape the plan through /aidlc compose, not by editing here -->
+
+```json
+{ "stages": { "intent-capture": "EXECUTE", "units-generation": "SKIP" } }
+```
+
+<!-- END aidlc composed-scope-grid -->
+````
+
+Reshape the plan with `/aidlc compose`, not by editing the region — a hand-edited grid is not validated against the stage graph, so it can starve a stage of an input it requires.
+
+Editing the part above the sentinel is fine, but note that `graph compile` writes the harness scope file only when it is **missing**; it does not overwrite one you have edited. So if you change `depth` or `description` in the record, delete `<harness>/scopes/aidlc-<name>.md` and recompile to re-project it. The plan itself always comes from the record, so this only affects descriptive fields.
+
+Saved scopes ship with `keywords: []`, so a saved plan carries no hints into the agent's plan proposal step. Giving it hints is an explicit choice when it is saved (`scope save --keywords <word,...>`, single words; a hint another plan already has is saved too, and the save says in one line that the plan proposal lists it under both), never a side effect.
+
+### When a record is unreadable
+
+A record missing its frontmatter, its `name`, or its generated grid region **stops** `graph compile` and `aidlc update` with the file path and the required edit named — it is committed work, so it is never silently skipped. Repair the named file, or delete it: if the harness projection is still present, the next compile back-fills a fresh record from it. `/aidlc --doctor`'s **Composed scope durability** check reports a scope file with no grid column, a record that has not been projected yet, and a runnable workflow whose scope no longer resolves.
 
 ---
 

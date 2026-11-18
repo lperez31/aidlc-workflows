@@ -22,8 +22,9 @@ Construction chain, stages 3.1 through 3.5, in graph order. Main never reruns
 those stages after merge because the team's keyed receipts arrive with its
 audit shard.
 
-For the Workshop scope's stage grid and Minimal test floor, see
-[Scopes and Depth](05-scopes-and-depth.md#workshop).
+For the Workshop scope and its Minimal test floor, see
+[Workflow Profiles](workflow-profiles.md#workshop); its exact stages are in the
+[Stage-by-Scope Matrix](05-scopes-and-depth.md#stage-by-scope-matrix).
 
 ---
 

@@ -210,7 +210,7 @@ Scope is a file-authored primitive, the same muscle memory as authoring a sensor
 
 `aidlc engine graph compile` (the same compile path that produces `stage-graph.json`) transposes these into the grid at `tools/data/scope-grid.json` — a `scope → {stages: {slug: EXECUTE|SKIP}}` map that the engine reads for all scope-level routing. The engine's `validScopes()` derives its canonical scope-name set from that compiled grid.
 
-The transpose covers only frontmatter-declared (stock) scopes. A scope saved from a composed plan has no stage declaring it, so compile folds its column back from its durable record at `aidlc/scopes/<name>.md` and projects the matching identity file into `<harness-dir>/scopes/` (see [Where a saved scope is stored](../guide/05-scopes-and-depth.md#where-a-saved-scope-is-stored)).
+The transpose covers only frontmatter-declared (stock) scopes. A scope saved from a composed plan has no stage declaring it, so compile folds its column back from its durable record at `aidlc/scopes/<name>.md` and projects the matching identity file into `<harness-dir>/scopes/` (see [Where a saved scope is stored](../harness-engineering/04-scopes.md#where-a-saved-scope-is-stored)).
 
 Adding a scope is purely additive: drop `.claude/scopes/aidlc-<name>.md`, tag the member stages' `scopes:` lists, recompile, and regenerate the human-readable summary table in `tables.md`, beside `SKILL.md`. No dispatch-logic edit is required, and the drift guards prevent the on-disk set from diverging.
 

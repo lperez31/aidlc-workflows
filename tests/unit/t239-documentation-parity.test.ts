@@ -752,8 +752,8 @@ describe("documentation parity derives current behavior from authored implementa
       "infrastructure-design",
     ];
     let summaries = 0;
-    for (const section of read("docs", "guide", "05-scopes-and-depth.md").split(/^(?=### )/m)) {
-      const scope = /^### ([a-z][a-z-]+)\r?\n/.exec(section)?.[1];
+    for (const section of read("docs", "guide", "workflow-profiles.md").split(/^(?=## )/m)) {
+      const scope = /^## `([a-z][a-z-]+)`\r?\n/.exec(section)?.[1];
       const stages = scope === undefined ? undefined : scopeGrid[scope]?.stages;
       if (stages === undefined) continue;
       summaries += 1;
@@ -769,7 +769,7 @@ describe("documentation parity derives current behavior from authored implementa
         expect(design.some(runs), `${scope}: "most design and architecture stages"`).toBe(true);
       }
     }
-    expect(summaries, "the scopes page has a summary per shipped scope").toBe(Object.keys(scopeGrid).length);
+    expect(summaries, "Workflow Profiles has a summary per shipped scope").toBe(Object.keys(scopeGrid).length);
   });
 
   test("the guide's add-a-skipped-stage choice is the one the stage protocol offers", () => {
@@ -1071,7 +1071,6 @@ describe("documentation parity derives current behavior from authored implementa
       }
     };
     perScope("workflow-profiles", read("docs", "guide", "workflow-profiles.md"), /^## `([a-z][a-z-]+)`/);
-    perScope("05-scopes-and-depth", read("docs", "guide", "05-scopes-and-depth.md"), /^### ([a-z][a-z-]+)\n/);
   });
 
   test("workspace CLI docs follow the implemented public and hidden routes", () => {

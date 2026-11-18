@@ -1024,6 +1024,18 @@ Expected behavior — the statusline updates when the state file is next written
 
 ---
 
+## An older classic workflow still runs Operation stages
+
+The `classic` plan no longer runs CI Pipeline or the Operation stages, but a classic workflow started on an earlier release keeps its saved stage plan: one whose Operation stages are recorded as `EXECUTE` still runs them, and routing, next-stage lookup, and status follow that recorded plan. New classic workflows use the smaller plan.
+
+Ceremony defaults change immediately when the old workflow has no saved ceremony fields: Sensors and Learnings resolve to `on`, while Summary Confirmation resolves to `off` from classic. Turn summary confirmation back on with `/aidlc --summary-confirmation on`, or ask for it in your own words. Saved per-intent ceremony choices remain in effect, and environment kill switches still take precedence.
+
+Classic's reviewer cap also changes immediately: reviewer-bearing stages run one advisory pass unless overridden. A per-work `--review` level replaces the scope cap but cannot exceed a stage's own review class: `--review adversarial` restores adversarial review on the stages that declare it, stages declared advisory stay advisory, and `--review none` still lowers it.
+
+To run the previous classic plan, with CI Pipeline and the Operation stages, change the work to workshop with `aidlc engine scope change --scope workshop`; workshop keeps the full Inception-through-Operation plan and uses a Minimal test strategy by default. Keep a production Standard test strategy by adding `--test-strategy standard` to that scope change.
+
+---
+
 ## Using `--doctor`
 
 The `--doctor` utility command validates your setup. Run it whenever something seems wrong:

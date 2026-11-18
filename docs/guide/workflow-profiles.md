@@ -59,7 +59,9 @@ flow, a rich task description may still receive an adaptive compose offer before
 anything is created. Classic uses Standard artifacts and tests. Walking-skeleton
 ceremony and summary confirmation are off. Sensors run and the learnings ritual runs.
 Reviews are advisory (one pass per stage, findings at the approval gate);
-explicit autonomy keeps the single pre-merge review. Guard Policy defaults to off:
+explicit autonomy keeps the single pre-merge review. Collaborators are off, so
+each stage runs with its lead agent only (`/aidlc --collaborators on` brings the
+support agents in). Guard Policy defaults to off:
 plan re-approval, review freeze, state transition, and reviewer read scope stand aside
 for undirected work and record a `GUARD_STOOD_ASIDE` row each time; Plan Approval is
 still asked, by the engine. Human-turn authority and audit remain in force.
@@ -86,7 +88,9 @@ and CI Pipeline. It disables stage reviewer dispatch and uses Minimal artifacts
 and requirement-driven tests. Reverse Engineering and deployment stages remain
 conditional.
 
-Express also turns sensors, learnings, and summary confirmation off.
+Express also turns sensors, learnings, and summary confirmation off, and plan
+approval too: each code plan is built as written after one line naming it, which
+says you can ask to go over it at any time.
 Override them per intent with [`/aidlc --sensors on|off`](12-cli-commands.md#aidlc-sensors-learnings-summary-confirmation-ceremony-controls),
 [`/aidlc --learnings on|off`](12-cli-commands.md#aidlc-sensors-learnings-summary-confirmation-ceremony-controls),
 or [`/aidlc --summary-confirmation on|off`](12-cli-commands.md#aidlc-sensors-learnings-summary-confirmation-ceremony-controls).
@@ -138,6 +142,11 @@ PoC uses 5 stages at Minimal depth. It gets to requirements, code, and tests
 quickly while omitting most product, design, and operational ceremony. A PoC is
 evidence for a later decision; it is not the production-readiness profile.
 
+Plan approval is off: once a code plan is written you see one line naming it,
+code generation starts, and the line says you can ask to go over the plan at any
+time. You can also ask to see a plan before it is built, or to be asked about
+every plan.
+
 ## `bugfix`
 
 **Choose Bugfix when:** the defect is known and the desired outcome is a focused
@@ -148,8 +157,10 @@ requirements, Code Generation, Build and Test, and the deployment path while
 dropping discovery, broad design, and unrelated Operation work.
 
 Bugfix also turns learnings and summary confirmation off, so no stage keeps a
-diary or asks "Keep that for next time?" after a correction. Sensors, stage approvals, and plan
-approval stay on.
+diary or asks "Keep that for next time?" after a correction, and each stage runs
+with its lead agent only. Sensors, stage approvals, and plan approval stay on.
+Type `/aidlc --learnings on`, `/aidlc --summary-confirmation on`, or
+`/aidlc --collaborators on` to bring one back for this piece of work.
 
 ## `refactor`
 
@@ -157,8 +168,9 @@ approval stay on.
 maintainability, or technical debt improves.
 
 Refactor uses 7 stages at Minimal depth. It emphasizes understanding the
-existing code, defining the internal change, implementing it, proving behavior
-did not regress, and carrying the verified result through deployment. Use
+existing code, defining the internal change in Functional Design, implementing
+it, proving behavior did not regress, and carrying the verified result through
+deployment. Use
 Feature instead if the work changes user-visible behavior.
 
 ## `infra`
@@ -254,5 +266,5 @@ The workflow profile chooses the route and defaults. You can independently tune:
   declares, and a set per-run cap replaces the profile cap.
 
 These overrides do not turn one profile into another; they adjust the selected
-profile. See [Scopes, Depth, and Test Strategy](05-scopes-and-depth.md) for the
-normative routing matrix and override semantics.
+profile. See [Scopes, Depth, and Test Strategy](05-scopes-and-depth.md) for how
+a workflow runs, how to tailor its stages, and the exact stage-by-scope matrix.
